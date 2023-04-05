@@ -1,0 +1,6 @@
+pandas
+fastapi[all]
+uvicorn[standard]
+python-dotenv
+pyodbc
+sqlalchemy

@@ -46,6 +46,8 @@ def execute_odbc(cnn, query):
 def execute_alchemy(engine, query):
     engine = create_engine(f"mssql+pyodbc://{uid}:{pwd}@{svr}/{db}?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes", fast_executemany=True)
     cnn = engine.connect()
+    # execute sql query using
+    
     for row in cnn.execute("select top 10 * from band"):
         print(row)
 

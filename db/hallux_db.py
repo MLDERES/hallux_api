@@ -46,15 +46,13 @@ def execute_odbc(cnn, query):
 # with the engine and the query as parameters, write a function that will execute the query using sqlalchemy
 def execute_alchemy(engine, query):
     engine = create_engine(f"mssql+pyodbc://{uid}:{pwd}@{svr}/{db}?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes", fast_executemany=True)
-    # create the connection
-
-    
-
-    for row in cnn.execute(query):
+    for row in engine.execute(query):
         print(row)
+
 
 
 
 q = "SELECT top 10 * FROM Band"
 execute_odbc(connect_odbc(), q)
-#execute_alchemy(connect_alchemy(), q)
+q = "SELECT top 10 * FROM Album"
+execute_alchemy(connect_alchemy(), q)

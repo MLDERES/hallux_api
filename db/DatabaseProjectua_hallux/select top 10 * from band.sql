@@ -1,3 +1,2 @@
-select top 10
-    *
+select top 10  *
 from band

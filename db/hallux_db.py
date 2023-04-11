@@ -50,9 +50,10 @@ def execute_alchemy(engine, query):
         print(row)
 
 
-
-
 q = "SELECT top 10 * FROM Band"
 execute_odbc(connect_odbc(), q)
 q = "SELECT top 10 * FROM Album"
+execute_alchemy(connect_alchemy(), q)
+
+q = "select top 10 * from Person"
 execute_alchemy(connect_alchemy(), q)

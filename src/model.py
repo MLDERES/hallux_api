@@ -31,19 +31,21 @@ class Band(SQLModel, table=True):
     # Create a relationship to the Person class
     primary_contact: Optional[Person] = Relationship(back_populates="bands")
 
-class Zip_Code(SQLModel, table=True):
-    zip_code : Optional[str] = Field(default=None, primary_key=True, description="Zip Code", sa_column_kwargs={"name":"Zip_Code"})
-    state_abbr : Optional[str] = Field(default=None, description="State Abbreviation", sa_column_kwargs={"name":"State_Abbr"})
-    city : Optional[str] = Field(default=None, description="City")
-    latitude : Optional[float] = Field(default=None, description="Latitude")
-    longitude : Optional[float] = Field(default=None, description="Longitude")
-
-
 
 class State(SQLModel, table=True):
     abbr: Optional[str] = Field(default=None, primary_key=True, sa_column_kwargs={"name":"State_Abbr"})
     name: Optional[str] = Field(default=None,sa_column_kwargs={"name":"State_Name"})
+    zip_codes: List["Zip_Code"] = Relationship(back_populates="state")
 
+class Zip_Code(SQLModel, table=True):
+    zip_code : Optional[str] = Field(default=None, primary_key=True, description="Zip Code", sa_column_kwargs={"name":"Zip_Code"})
+    state_abbr : Optional[str] = Field(default=None, description="State Abbreviation", sa_column_kwargs={"name":"State_Abbr"},foreign_key="state.State_Abbr")
+    city : Optional[str] = Field(default=None, description="City")
+    latitude : Optional[float] = Field(default=None, description="Latitude")
+    longitude : Optional[float] = Field(default=None, description="Longitude")
+
+    # Create a relationship to the State class
+    state: Optional[State] = Relationship(back_populates="zip_codes")
 
 # # Create a class called Instrument which inherits from SQLModel
 # class Instrument(SQLModel, table=True):
@@ -94,23 +96,39 @@ engine = create_engine(f"mssql+pyodbc://{uid}:{pwd}@{svr}/{db}?driver=ODBC+Drive
 # Create the database tables
 SQLModel.metadata.create_all(engine)
 
+
+# Get all bands
+def get_bands():
+    with Session(engine) as session:
+        statement = select(Band)
+        results = session.exec(statement)
+        return results.all()
+    
 def get_bands_by_name(name: str):
     with Session(engine) as session:
         statement = select(Band).where(Band.name.startswith(name))
         results = session.exec(statement)
-        return results
+        return results.all() if results else None
 
+def get_band_by_id(id: int):
+    with Session(engine) as session:
+        statement = select(Band).where(Band.id==id)
+        results = session.exec(statement)
+        return results.all() if results else None
+    
 def get_persons_by_first_name(name: str):
     with Session(engine) as session:
         statement = select(Person).where(Person.first_name.startswith(name))
         results = session.exec(statement)
-        return results
+        return results.all() if results else None
     
 def get_persons_by_last_name(name: str):
     with Session(engine) as session:
         statement = select(Person).where(Person.last_name.startswith(name))
         results = session.exec(statement)
-        return results
+        return results.all() if results else None
 
+for b in get_bands():
+    print(b.id, b.name)
 
 

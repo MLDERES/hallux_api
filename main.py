@@ -20,7 +20,4 @@ def read_band_by_id(band_id: int):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Band not found.')
     return band
 
-@app.get("/bands/{band_name}", response_model=List[Band])
-def read_band_by_id(band_name: str = '', offset: int=0, limit:int=Query(default=10,lte=100)):
-    return get_bands_by_name(band_name, offset, limit)
 

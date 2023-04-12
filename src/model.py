@@ -7,7 +7,7 @@ import pyodbc
 
 # Create a class called Person which inherits from SQLModel
 class Person(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True, description="Person ID", sa_column_kwargs={"name":"Person_id"})
+    id: Optional[int] = Field(default=None, primary_key=True, description="Person ID", sa_column_kwargs={"name":"Person_Id"})
     first_name: Optional[str] = Field(default=None, description="Person First Name",)
     last_name: Optional[str] = Field(default=None, description="Person Last Name",)
     address: Optional[str] = Field(default=None, description="Person's Address",sa_column_kwargs={"name":"street_address"})
@@ -26,7 +26,7 @@ class Band(SQLModel, table=True):
     formation_date: Optional[datetime] = Field(default=None, description="Date the band was formed")
     
     # The foreign key here must match the sa_column name
-    primary_contact_id: Optional[int] = Field(default=None, description="ID of the primary contact for the band", foreign_key="person.Person_id")
+    primary_contact_id: Optional[int] = Field(default=None, description="ID of the primary contact for the band", foreign_key="person.Person_Id")
 
     # Create a relationship to the Person class
     primary_contact: Optional[Person] = Relationship(back_populates="bands")
@@ -89,35 +89,38 @@ uid = getenv("HALLUX_USER")
 pwd = getenv("HALLUX_PASSWORD")
 db = getenv("HALLUX_DB")
 
-print(svr, uid, pwd, db)
 # Setup the database connection
 engine = create_engine(f"mssql+pyodbc://{uid}:{pwd}@{svr}/{db}?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes", fast_executemany=True)
 # Create the database tables
 SQLModel.metadata.create_all(engine)
 
 
-# Get bands 
+# Get a list of bands using partial name match or if not supplied, all bands
 def get_bands(name: str = '', offset: int = 0, limit: int = 100):
     with Session(engine) as session:
         statement = select(Band).order_by(Band.id).where(Band.name.startswith(name)).offset(offset).limit(limit)
         results = session.exec(statement)
         return results.all() if results else None
 
+# Get a band by id
 def get_band_by_id(id: int) -> Band:
     with Session(engine) as session:
         statement = select(Band).where(Band.id==id)
         results = session.exec(statement)
         return results.first() if results else None
     
-def get_persons_by_first_name(name: str):
+# Get persons by first_name, last_name, or both
+def get_persons(first_name: str = '', last_name: str = '', offset: int = 0, limit: int = 100):
     with Session(engine) as session:
-        statement = select(Person).where(Person.first_name.startswith(name))
-        results = session.exec(statement)
-        return results.all() if results else None
-    
-def get_persons_by_last_name(name: str):
-    with Session(engine) as session:
-        statement = select(Person).where(Person.last_name.startswith(name))
+        fname_filter = Person.first_name.startswith(first_name)
+        lname_filter = Person.last_name.startswith(last_name)
+        statement = select(Person).order_by(Person.id).where(fname_filter).where(lname_filter).offset(offset).limit(limit)
         results = session.exec(statement)
         return results.all() if results else None
 
+# Look up a person with a given id
+def get_person_by_id(id: int) -> Person:
+    with Session(engine) as session:
+        statement = select(Person).where(Person.id==id)
+        results = session.exec(statement)
+        return results.first() if results else None

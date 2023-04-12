@@ -96,18 +96,18 @@ engine = create_engine(f"mssql+pyodbc://{uid}:{pwd}@{svr}/{db}?driver=ODBC+Drive
 SQLModel.metadata.create_all(engine)
 
 
-# Get all bands
-def get_bands(offset: int = 0, limit: int = 100):
+# Get bands 
+def get_bands(name: str = '', offset: int = 0, limit: int = 100):
     with Session(engine) as session:
-        statement = select(Band).order_by(Band.id).offset(offset).limit(limit)
+        statement = select(Band).order_by(Band.id).where(Band.name.startswith(name)).offset(offset).limit(limit)
         results = session.exec(statement)
         return results.all() if results else None
     
-def get_bands_by_name(name: str, offset: int = 0, limit: int = 100):
-    with Session(engine) as session:
-        statement = select(Band).order_by(Band.name).where(Band.name.startswith(name)).offset(offset).limit(limit)
-        results = session.exec(statement)
-        return results.all() if results else None
+# def get_bands_by_name(name: str, offset: int = 0, limit: int = 100):
+#     with Session(engine) as session:
+#         statement = select(Band).order_by(Band.name).where(Band.name.startswith(name)).offset(offset).limit(limit)
+#         results = session.exec(statement)
+#         return results.all() if results else None
 
 def get_band_by_id(id: int) -> Band:
     with Session(engine) as session:

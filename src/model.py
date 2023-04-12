@@ -31,7 +31,6 @@ class Band(SQLModel, table=True):
     # Create a relationship to the Person class
     primary_contact: Optional[Person] = Relationship(back_populates="bands")
 
-
 class State(SQLModel, table=True):
     abbr: Optional[str] = Field(default=None, primary_key=True, sa_column_kwargs={"name":"State_Abbr"})
     name: Optional[str] = Field(default=None,sa_column_kwargs={"name":"State_Name"})
@@ -98,9 +97,9 @@ SQLModel.metadata.create_all(engine)
 
 
 # Get all bands
-def get_bands():
+def get_bands(offset: int = 0, limit: int = 100):
     with Session(engine) as session:
-        statement = select(Band)
+        statement = select(Band).order_by(Band.id).offset(offset).limit(limit)
         results = session.exec(statement)
         return results.all()
     
@@ -127,8 +126,4 @@ def get_persons_by_last_name(name: str):
         statement = select(Person).where(Person.last_name.startswith(name))
         results = session.exec(statement)
         return results.all() if results else None
-
-for b in get_bands():
-    print(b.id, b.name)
-
 

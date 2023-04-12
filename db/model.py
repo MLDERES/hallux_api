@@ -7,7 +7,7 @@ import pyodbc
 
 # Create a class called Person which inherits from SQLModel
 class Person(SQLModel, table=True):
-    person_id: Optional[int] = Field(default=None, primary_key=True, description="Person ID", sa_column_kwargs={"name":"Person_id"})
+    id: Optional[int] = Field(default=None, primary_key=True, description="Person ID", sa_column_kwargs={"name":"Person_id"})
     first_name: Optional[str] = Field(default=None, description="Person First Name",)
     last_name: Optional[str] = Field(default=None, description="Person Last Name",)
     address: Optional[str] = Field(default=None, description="Person's Address",sa_column_kwargs={"name":"street_address"})
@@ -24,16 +24,12 @@ class Band(SQLModel, table=True):
     status_code: Optional[str] = Field(default=None, description="Band Status Code", sa_column_kwargs={"name":"Band_Status_Code"})
     name: Optional[str] = Field(default=None, description="Name of the band", sa_column_kwargs={"name":"Band_Name"})
     formation_date: Optional[datetime] = Field(default=None, description="Date the band was formed")
+    
+    # The foreign key here must match the sa_column name
     primary_contact_id: Optional[int] = Field(default=None, description="ID of the primary contact for the band", foreign_key="person.Person_id")
 
     # Create a relationship to the Person class
     primary_contact: Optional[Person] = Relationship(back_populates="bands")
-
-    
-
-
-
-
 
 class Zip_Code(SQLModel, table=True):
     zip_code : Optional[str] = Field(default=None, primary_key=True, description="Zip Code", sa_column_kwargs={"name":"Zip_Code"})
@@ -97,17 +93,24 @@ print(svr, uid, pwd, db)
 engine = create_engine(f"mssql+pyodbc://{uid}:{pwd}@{svr}/{db}?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes", fast_executemany=True)
 # Create the database tables
 SQLModel.metadata.create_all(engine)
-# Create a session to interact with the database
-with Session(engine) as session:
-    #Query all the bands
-    statement = select(Band)
-    results = session.exec(statement)
-    # Print the results
-    for band in results:
-        print(band)
-        print(band.primary_contact)
 
+def get_bands_by_name(name: str):
+    with Session(engine) as session:
+        statement = select(Band).where(Band.name.startswith(name))
+        results = session.exec(statement)
+        return results
 
+def get_persons_by_first_name(name: str):
+    with Session(engine) as session:
+        statement = select(Person).where(Person.first_name.startswith(name))
+        results = session.exec(statement)
+        return results
+    
+def get_persons_by_last_name(name: str):
+    with Session(engine) as session:
+        statement = select(Person).where(Person.last_name.startswith(name))
+        results = session.exec(statement)
+        return results
 
 
 

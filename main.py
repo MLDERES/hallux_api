@@ -21,6 +21,6 @@ def read_band_by_id(band_id: int, q: Union[str, None] = None):
     return band
 
 @app.get("/bands/{band_name}", response_model=List[Band])
-def read_band_by_id(band_name: str = '', q: Union[str, None] = None):
-    return get_bands_by_name(band_name)
+def read_band_by_id(band_name: str = '', offset: int=0, limit:int=Query(default=10,lte=100)):
+    return get_bands_by_name(band_name, offset, limit)
 

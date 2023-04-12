@@ -101,19 +101,19 @@ def get_bands(offset: int = 0, limit: int = 100):
     with Session(engine) as session:
         statement = select(Band).order_by(Band.id).offset(offset).limit(limit)
         results = session.exec(statement)
-        return results.all()
+        return results.all() if results else None
     
-def get_bands_by_name(name: str):
+def get_bands_by_name(name: str, offset: int = 0, limit: int = 100):
     with Session(engine) as session:
-        statement = select(Band).where(Band.name.startswith(name))
+        statement = select(Band).order_by(Band.name).where(Band.name.startswith(name)).offset(offset).limit(limit)
         results = session.exec(statement)
         return results.all() if results else None
 
-def get_band_by_id(id: int):
+def get_band_by_id(id: int) -> Band:
     with Session(engine) as session:
         statement = select(Band).where(Band.id==id)
         results = session.exec(statement)
-        return results.all() if results else None
+        return results.first() if results else None
     
 def get_persons_by_first_name(name: str):
     with Session(engine) as session:

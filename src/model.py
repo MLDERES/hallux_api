@@ -1,10 +1,61 @@
 from typing import Optional, List
 from datetime import datetime
-from sqlmodel import Field, Session, SQLModel, create_engine, select, Relationship,DateTime
+from sqlmodel import Field, Session, SQLModel, create_engine, select, Relationship
 from dotenv import load_dotenv
 from os import getenv
-import pyodbc
 
+# Create a class called Customer which inherits from SQLModel  
+class Customer(SQLModel, table=True):
+    # Specify a map to all the fields in the database table called Customer
+    id: Optional[int] = Field(default=None, primary_key=True, description="Customer ID", sa_column_kwargs={"name":"Customer_Id"})
+    first_name: Optional[str] = Field(default=None, description="Customer First Name",sa_column_kwargs={"name":"First_Name"})
+    last_name: Optional[str] = Field(default=None, description="Customer Last Name",sa_column_kwargs={"name":"Last_Name"})
+    name: Optional[str] = Field(default=None, description="Customer Name",sa_column_kwargs={"name":"Name"})
+    address: Optional[str] = Field(default=None, description="Customer's Address",sa_column_kwargs={"name":"Street_Address"})
+    phone_number: Optional[str] = Field(default=None, description="Customer's Phone Number",sa_column_kwargs={"name":"Phone_Number"})
+    email: Optional[str] = Field(default=None, description="Customer's Email Address",sa_column_kwargs={"name":"Email"})
+    zip_code_ext: Optional[str] = Field(default=None, description="Customer's Zip Code Extension",sa_column_kwargs={"name":"Zip_Code_Ext"})
+
+    # Create a relationship to the zip_code class
+    # The foreign key here must match the sa_column name
+    zip_code: Optional[str] = Field(default=None, description="Customer's zip code", foreign_key="zip_code.Zip_Code")
+
+class State(SQLModel, table=True):
+    abbr: Optional[str] = Field(default=None, primary_key=True, sa_column_kwargs={"name":"State_Abbr"})
+    name: Optional[str] = Field(default=None,sa_column_kwargs={"name":"State_Name"})
+    zip_codes: List["Zip_Code"] = Relationship(back_populates="state")
+
+class Zip_Code(SQLModel, table=True):
+    zip_code : Optional[str] = Field(default=None, primary_key=True, description="Zip Code", sa_column_kwargs={"name":"Zip_Code"})
+    state_abbr : Optional[str] = Field(default=None, description="State Abbreviation", sa_column_kwargs={"name":"State_Abbr"},foreign_key="state.State_Abbr")
+    city : Optional[str] = Field(default=None, description="City")
+    latitude : Optional[float] = Field(default=None, description="Latitude")
+    longitude : Optional[float] = Field(default=None, description="Longitude")
+
+    # Create a relationship to the State class
+    state: Optional[State] = Relationship(back_populates="zip_codes")
+
+# Create a class called Item_Type which inherits from SQLModel
+class Item_Type(SQLModel, table=True):
+    # Specify a map to all the fields in the database table called Item_Type
+    id: Optional[int] = Field(default=None, primary_key=True, description="Item Type ID", sa_column_kwargs={"name":"Item_Type_Id"})
+    item_type: Optional[str] = Field(default=None, description="Item Type Description", sa_column_kwargs={"name":"Item_Type"})
+
+# Create a class called Producer which inherits from SQLModel
+class Producer(SQLModel, table=True):
+    # Specify a map to all the fields in the database table called Producer
+    id: Optional[int] = Field(default=None, primary_key=True, description="Producer ID", sa_column_kwargs={"name":"Producer_Id"})
+    name: Optional[str] = Field(default=None, description="Producer Name", sa_column_kwargs={"name":"Producer_Name"})
+
+# Create a class called Album which inherits from SQLModel
+class Album(SQLModel, table=True):
+    # Specify a map to all the fields in the database table called Album
+    id: Optional[int] = Field(default=None, primary_key=True, foreign_key='Item.Item_Id', description="Album ID", sa_column_kwargs={"name":"Album_Id"})
+    name: Optional[str] = Field(default=None, description="Album Title", sa_column_kwargs={"name":"Album_Name"})
+    release_date: Optional[datetime] = Field(default=None, description="Album Release Date")
+    production_cost: Optional[float] = Field(default=None, description="Cost to produce the album", sa_column_kwargs={"name":"Production_Cost"})
+    band_id: int = Field(default=None, description="Band ID", sa_column_kwargs={"name":"Band_Id"}, foreign_key="Band.Band_id")    
+    
 # Create a class called Person which inherits from SQLModel
 class Person(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True, description="Person ID", sa_column_kwargs={"name":"Person_Id"})
@@ -31,24 +82,10 @@ class Band(SQLModel, table=True):
     # Create a relationship to the Person class
     primary_contact: Optional[Person] = Relationship(back_populates="bands")
 
-class State(SQLModel, table=True):
-    abbr: Optional[str] = Field(default=None, primary_key=True, sa_column_kwargs={"name":"State_Abbr"})
-    name: Optional[str] = Field(default=None,sa_column_kwargs={"name":"State_Name"})
-    zip_codes: List["Zip_Code"] = Relationship(back_populates="state")
 
-class Zip_Code(SQLModel, table=True):
-    zip_code : Optional[str] = Field(default=None, primary_key=True, description="Zip Code", sa_column_kwargs={"name":"Zip_Code"})
-    state_abbr : Optional[str] = Field(default=None, description="State Abbreviation", sa_column_kwargs={"name":"State_Abbr"},foreign_key="state.State_Abbr")
-    city : Optional[str] = Field(default=None, description="City")
-    latitude : Optional[float] = Field(default=None, description="Latitude")
-    longitude : Optional[float] = Field(default=None, description="Longitude")
-
-    # Create a relationship to the State class
-    state: Optional[State] = Relationship(back_populates="zip_codes")
-
-# # Create a class called Instrument which inherits from SQLModel
-# class Instrument(SQLModel, table=True):
-#     pass
+# Create a class called Instrument which inherits from SQLModel
+class Instrument(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True, description="Instrument ID", sa_column_kwargs={"name":"Instrument_Id"})
 
 
 # # Create a class called Album which inherits from SQLModel
@@ -56,11 +93,12 @@ class Zip_Code(SQLModel, table=True):
 #     pass
 # # Create a class called Song which inherits from SQLModel
 # class Song(SQLModel, table=True):
-
 #     pass
+
 # # Create a class called Band_Instrument which inherits from SQLModel
 # class Band_Instrument(SQLModel, table=True):
 #     pass
+
 # # Create a class called Band_Person which inherits from SQLModel
 # class Band_Person(SQLModel, table=True):
 #     pass
@@ -80,47 +118,3 @@ class Zip_Code(SQLModel, table=True):
 # class Band_Song(SQLModel, table=True):
 #     pass
 
-# This library allows the environment variables to be loaded from a file
-load_dotenv()
-
-# To get this working quickly, you can just replace these variables with your own values
-svr = getenv("MSSQL_SERVER")
-uid = getenv("HALLUX_USER")
-pwd = getenv("HALLUX_PASSWORD")
-db = getenv("HALLUX_DB")
-
-# Setup the database connection
-engine = create_engine(f"mssql+pyodbc://{uid}:{pwd}@{svr}/{db}?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes", fast_executemany=True)
-# Create the database tables
-SQLModel.metadata.create_all(engine)
-
-
-# Get a list of bands using partial name match or if not supplied, all bands
-def get_bands(name: str = '', offset: int = 0, limit: int = 100):
-    with Session(engine) as session:
-        statement = select(Band).order_by(Band.id).where(Band.name.startswith(name)).offset(offset).limit(limit)
-        results = session.exec(statement)
-        return results.all() if results else None
-
-# Get a band by id
-def get_band_by_id(id: int) -> Band:
-    with Session(engine) as session:
-        statement = select(Band).where(Band.id==id)
-        results = session.exec(statement)
-        return results.first() if results else None
-    
-# Get persons by first_name, last_name, or both
-def get_persons(first_name: str = '', last_name: str = '', offset: int = 0, limit: int = 100):
-    with Session(engine) as session:
-        fname_filter = Person.first_name.startswith(first_name)
-        lname_filter = Person.last_name.startswith(last_name)
-        statement = select(Person).order_by(Person.id).where(fname_filter).where(lname_filter).offset(offset).limit(limit)
-        results = session.exec(statement)
-        return results.all() if results else None
-
-# Look up a person with a given id
-def get_person_by_id(id: int) -> Person:
-    with Session(engine) as session:
-        statement = select(Person).where(Person.id==id)
-        results = session.exec(statement)
-        return results.first() if results else None

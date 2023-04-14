@@ -7,8 +7,6 @@ from src.db import get_album_by_id, get_albums, get_bands, get_band_by_id, get_p
 
 app = FastAPI()
 
-
-
 @app.get("/")
 def read_root():
     return {"Hello": "World"}

@@ -62,3 +62,5 @@ def get_album_by_id(id: int) -> Album:
         results = session.exec(statement)
         return results.first() if results else None
     
+
+    

@@ -17,20 +17,20 @@ engine = create_engine(f"mssql+pyodbc://{uid}:{pwd}@{svr}/{db}?driver=ODBC+Drive
 # Create the database tables
 SQLModel.metadata.create_all(engine)
 
+def get_session():
+    with Session(engine) as session:
+        yield session
 
 # Get a list of bands using partial name match or if not supplied, all bands
-def get_bands(name: str = '', offset: int = 0, limit: int = 100):
-    with Session(engine) as session:
-        statement = select(Band).order_by(Band.id).where(Band.name.startswith(name)).offset(offset).limit(limit)
-        results = session.exec(statement)
-        return results.all() if results else None
+def get_bands(session: Session, name: str = '', offset: int = 0, limit: int = 100):
+    statement = select(Band).order_by(Band.id).where(Band.name.startswith(name)).offset(offset).limit(limit)
+    results = session.exec(statement)
+    return results.all() if results else None
 
 # Get a band by id
-def get_band_by_id(id: int) -> Band:
-    with Session(engine) as session:
-        statement = select(Band).where(Band.id==id)
-        results = session.exec(statement)
-        return results.first() if results else None
+def get_band_by_id(session:Session, id: int) -> Band:
+    results = session.exec(select(Band).where(Band.id==id))
+    return results.first() if results else None
     
 # Get persons by first_name, last_name, or both
 def get_persons(first_name: str = '', last_name: str = '', offset: int = 0, limit: int = 100):

@@ -4,6 +4,12 @@ from sqlmodel import Field, Session, SQLModel, create_engine, select, Relationsh
 from dotenv import load_dotenv
 from os import getenv
 
+# Create a class called Genre which inherits from SQLModel
+class Genre(SQLModel, table=True):
+    # Specify a map to all the fields in the database table called Genre
+    id: Optional[int] = Field(default=None, primary_key=True, description="Genre ID", sa_column_kwargs={"name":"Genre_Id"})
+    name: Optional[str] = Field(default=None, description="Genre Name",sa_column_kwargs={"name":"Genre"})
+
 # Create a class called Customer which inherits from SQLModel  
 class Customer(SQLModel, table=True):
     # Specify a map to all the fields in the database table called Customer
@@ -55,10 +61,10 @@ class Album(SQLModel, table=True):
     release_date: Optional[datetime] = Field(default=None, description="Album Release Date")
     production_cost: Optional[float] = Field(default=None, description="Cost to produce the album", sa_column_kwargs={"name":"Production_Cost"})
     band_id: int = Field(default=None, description="Band ID", sa_column_kwargs={"name":"Band_Id"}, foreign_key="Band.Band_id")    
-    
-# Create a class called Person which inherits from SQLModel
-class Person(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True, description="Person ID", sa_column_kwargs={"name":"Person_Id"})
+
+# Create the base Person class with the fields that are common to all the Person types
+# This class will be inherited by the other Person classes
+class PersonBase(SQLModel):
     first_name: Optional[str] = Field(default=None, description="Person First Name",)
     last_name: Optional[str] = Field(default=None, description="Person Last Name",)
     address: Optional[str] = Field(default=None, description="Person's Address",sa_column_kwargs={"name":"street_address"})
@@ -67,21 +73,38 @@ class Person(SQLModel, table=True):
     zip_code_ext: Optional[str] = Field(default=None, description="Person's Zip Code Extension")
     zip_code: Optional[str] = Field(default=None, description="Person's Zip Code")
     
+
+# Create a class called Person which inherits from SQLModel
+class Person(PersonBase, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True, description="Person ID", sa_column_kwargs={"name":"Person_Id"})
+    
+    # Relationships can ONLY be defined in the table models
     bands: List["Band"] = Relationship(back_populates="primary_contact")
 
-class Band(SQLModel, table=True):
-    # Specify a map to all the fields in the database table called Band
-    id: Optional[int] =Field(default=None, primary_key=True, description="Band ID", sa_column_kwargs={"name":"Band_id"})
+class PersonRead(PersonBase):
+    id: int
+
+# Create the Band base class
+class BandBase(SQLModel):
     status_code: Optional[str] = Field(default=None, description="Band Status Code", sa_column_kwargs={"name":"Band_Status_Code"})
     name: Optional[str] = Field(default=None, description="Name of the band", sa_column_kwargs={"name":"Band_Name"})
     formation_date: Optional[datetime] = Field(default=None, description="Date the band was formed")
-    
     # The foreign key here must match the sa_column name
     primary_contact_id: Optional[int] = Field(default=None, description="ID of the primary contact for the band", foreign_key="person.Person_Id")
 
+class Band(BandBase, table=True):
+    # Specify a map to all the fields in the database table called Band
+    id: Optional[int] =Field(default=None, primary_key=True, description="Band ID", sa_column_kwargs={"name":"Band_id"})
+
     # Create a relationship to the Person class
+    # Relationships can ONLY be defined in the table models
     primary_contact: Optional[Person] = Relationship(back_populates="bands")
 
+class BandRead(BandBase):
+    id: int
+
+class BandReadWithPersons(BandBase):
+    primary_contact : Optional[PersonRead]=None
 
 # Create a class called Instrument which inherits from SQLModel
 class Instrument(SQLModel, table=True):

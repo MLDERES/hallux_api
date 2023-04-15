@@ -1,8 +1,10 @@
 from types import UnionType
+from typing import List, Optional, Union
+from fastapi import HTTPException
 from sqlmodel import Field, Session, SQLModel, create_engine, select, Relationship
 from dotenv import load_dotenv
 from os import getenv
-from .model import Album, Band, Person, Song, SongReadWithAlbum
+from .model import Album, AlbumReadWithSongs, Band, Person, Song, SongRead
 
 # This library allows the environment variables to be loaded from a file
 load_dotenv()
@@ -29,9 +31,13 @@ def get_bands(session: Session, name: str = '', offset: int = 0, limit: int = 10
     return results.all() if results else None
 
 # Get a band by id
-def get_band_by_id(session:Session, id: int) -> Band:
-    results = session.exec(select(Band).where(Band.id==id))
-    return results.first() if results else None
+def get_band_by_id(session:Session, id: int):
+    band = session.get(Band, id)
+    if not band:
+         raise HTTPException(status_code=404, detail="Band not found")
+    return band
+    # results = session.exec(select(Band).where(Band.id==id))
+    # return results.first() if results else None
     
 # Get persons by first_name, last_name, or both
 def get_persons(first_name: str = '', last_name: str = '', offset: int = 0, limit: int = 100):
@@ -56,11 +62,16 @@ def get_albums(name: str = '', offset: int = 0, limit: int = 100):
         return results.all() if results else None
 
 # Get an album by id
-def get_album_by_id(id: int) -> Album:
-    with Session(engine) as session:
-        statement = select(Album).where(Album.id==id)
-        results = session.exec(statement)
-        return results.first() if results else None
+def get_album_by_id(session: Session, id: int):
+    album = session.get(Album, id)
+    if not album:
+         raise HTTPException(status_code=404, detail="Album not found")
+    return album
+    #
+    #  with Session(engine) as session:
+    #     statement = select(Album).where(Album.id==id)
+    #     results = session.exec(statement)
+    #     return results.first() if results else None
     
 # Get a list of songs for an album
 def get_songs(session, name: str = '', offset: int = 0, limit: int = 100) :
@@ -69,7 +80,7 @@ def get_songs(session, name: str = '', offset: int = 0, limit: int = 100) :
         return results.all() if results else None
 
 # Get a specific song by id
-def get_song_by_id(session, song_id: int) -> SongReadWithAlbum:
+def get_song_by_id(session, song_id: int) -> SongRead:
         statement = select(Song).where(Song.id ==song_id)
         results = session.exec(statement)
         return results.first() if results else None

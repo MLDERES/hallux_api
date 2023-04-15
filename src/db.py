@@ -1,7 +1,8 @@
+from types import UnionType
 from sqlmodel import Field, Session, SQLModel, create_engine, select, Relationship
 from dotenv import load_dotenv
 from os import getenv
-from .model import Album, Band, Person
+from .model import Album, Band, Person, Song
 
 # This library allows the environment variables to be loaded from a file
 load_dotenv()
@@ -44,8 +45,7 @@ def get_persons(first_name: str = '', last_name: str = '', offset: int = 0, limi
 # Look up a person with a given id
 def get_person_by_id(id: int) -> Person:
     with Session(engine) as session:
-        statement = select(Person).where(Person.id==id)
-        results = session.exec(statement)
+        results = session.exec(select(Person).where(Person.id==id))
         return results.first() if results else None
     
 # Get a list of albums using partial name match or if not supplied, all albums
@@ -59,6 +59,20 @@ def get_albums(name: str = '', offset: int = 0, limit: int = 100):
 def get_album_by_id(id: int) -> Album:
     with Session(engine) as session:
         statement = select(Album).where(Album.id==id)
+        results = session.exec(statement)
+        return results.first() if results else None
+    
+# Get a list of songs for an album
+def get_songs(name: str = '', offset: int = 0, limit: int = 100) :
+    with Session(engine) as session:
+        statement = select(Song).order_by(Song.album_id, Song.sequence).where(Song.name.startswith(name)).offset(offset).limit(limit)
+        results = session.exec(statement)
+        return results.all() if results else None
+
+# Get a specific song by id
+def get_song_by_id(song_id: int) -> Song:
+    with Session(engine) as session:
+        statement = select(Song).where(Song.id ==song_id)
         results = session.exec(statement)
         return results.first() if results else None
     

@@ -53,14 +53,20 @@ class Producer(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True, description="Producer ID", sa_column_kwargs={"name":"Producer_Id"})
     name: Optional[str] = Field(default=None, description="Producer Name", sa_column_kwargs={"name":"Producer_Name"})
 
-# Create a class called Album which inherits from SQLModel
-class Album(SQLModel, table=True):
-    # Specify a map to all the fields in the database table called Album
-    id: Optional[int] = Field(default=None, primary_key=True, foreign_key='Item.Item_Id', description="Album ID", sa_column_kwargs={"name":"Album_Id"})
-    name: Optional[str] = Field(default=None, description="Album Title", sa_column_kwargs={"name":"Album_Name"})
+class AlbumBase(SQLModel):
+    name: str = Field(default=None, description="Album Title", sa_column_kwargs={"name":"Album_Name"})
     release_date: Optional[datetime] = Field(default=None, description="Album Release Date")
     production_cost: Optional[float] = Field(default=None, description="Cost to produce the album", sa_column_kwargs={"name":"Production_Cost"})
-    band_id: int = Field(default=None, description="Band ID", sa_column_kwargs={"name":"Band_Id"}, foreign_key="Band.Band_id")    
+    band_id: int = Field(default=None, description="Band ID", sa_column_kwargs={"name":"Band_Id"}, foreign_key="band.Band_Id")
+
+class Album(AlbumBase, table=True):
+    # Specify a map to all the fields in the database table called Album
+    id: Optional[int] = Field(default=None, primary_key=True, description="Album ID", sa_column_kwargs={"name":"Album_Id"})
+    
+    # songs : List["Song"] = Relationship(back_populates="album")  
+
+class AlbumRead(AlbumBase):
+    id: int
 
 # Create the base Person class with the fields that are common to all the Person types
 # This class will be inherited by the other Person classes
@@ -73,13 +79,14 @@ class PersonBase(SQLModel):
     zip_code_ext: Optional[str] = Field(default=None, description="Person's Zip Code Extension")
     zip_code: Optional[str] = Field(default=None, description="Person's Zip Code")
     
-
 # Create a class called Person which inherits from SQLModel
 class Person(PersonBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True, description="Person ID", sa_column_kwargs={"name":"Person_Id"})
     
     # Relationships can ONLY be defined in the table models
     bands: List["Band"] = Relationship(back_populates="primary_contact")
+
+    band_links: List["Band_Member"] = Relationship(back_populates="member")
 
 class PersonRead(PersonBase):
     id: int
@@ -100,23 +107,42 @@ class Band(BandBase, table=True):
     # Relationships can ONLY be defined in the table models
     primary_contact: Optional[Person] = Relationship(back_populates="bands")
 
+    band_members: List["Band_Member"] = Relationship(back_populates="band")
+
 class BandRead(BandBase):
     id: int
 
 class BandReadWithPersons(BandBase):
     primary_contact : Optional[PersonRead]=None
+    members : Optional[PersonRead] = None
+
+class Band_Member(SQLModel, table=True,):
+    status : Optional[str] = None
+    band_id : Optional[int] = Field(default=None, description="Band ID", sa_column_kwargs={"name":"Band_id"}, foreign_key="band.Band_id")
+    member_id: int = Field(default=None, description="Member ID", 
+                           sa_column_kwargs={"name":"Member_Id"}, foreign_key="person.Person_Id", primary_key=True)
+    join_date: Optional[datetime] = Field(default=None, description="Date the band member joined the band")
+
+    band: "Band" = Relationship(back_populates="band_members")
+    member: "Person" = Relationship(back_populates="band_links")
 
 # Create a class called Instrument which inherits from SQLModel
 class Instrument(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True, description="Instrument ID", sa_column_kwargs={"name":"Instrument_Id"})
 
+class SongBase(SQLModel):
+    name: Optional[str] = Field(default=None, description="Song Title", sa_column_kwargs={"name":"Song_Name"})
+    duration: Optional[int] = Field(default=None, description="Duration in seconds", sa_column_kwargs={"name":"Duration_Seconds"})
+    sequence: Optional[int] = Field(default=None, description="Sequence of the song in the album")
 
-# # Create a class called Album which inherits from SQLModel
-# class Album(SQLModel, table=True):
-#     pass
-# # Create a class called Song which inherits from SQLModel
-# class Song(SQLModel, table=True):
-#     pass
+class Song(SongBase, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True, description="Song ID", sa_column_kwargs={"name":"Song_Id"})
+    album_id: Optional[int] = Field(default=None, description="Album ID where the song was recorded", sa_column_kwargs={"name":"Album_id"}, foreign_key="album.Album_Id")
+    # album: Optional[Album] = Relationship(back_populates="songs")
+
+class SongRead(SongBase):
+    id: int
+
 
 # # Create a class called Band_Instrument which inherits from SQLModel
 # class Band_Instrument(SQLModel, table=True):

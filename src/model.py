@@ -57,13 +57,13 @@ class AlbumBase(SQLModel):
     name: str = Field(default=None, description="Album Title", sa_column_kwargs={"name":"Album_Name"})
     release_date: Optional[datetime] = Field(default=None, description="Album Release Date")
     production_cost: Optional[float] = Field(default=None, description="Cost to produce the album", sa_column_kwargs={"name":"Production_Cost"})
-    band_id: int = Field(default=None, description="Band ID", sa_column_kwargs={"name":"Band_Id"}, foreign_key="band.Band_Id")
+    band_id: int = Field(default=None, description="Band ID", sa_column_kwargs={"name":"Band_Id"}, foreign_key="band.Band_id")
 
 class Album(AlbumBase, table=True):
     # Specify a map to all the fields in the database table called Album
     id: Optional[int] = Field(default=None, primary_key=True, description="Album ID", sa_column_kwargs={"name":"Album_Id"})
-    
-    # songs : List["Song"] = Relationship(back_populates="album")  
+    band: Optional["Band"] = Relationship(back_populates="albums")
+    songs : List["Song"] = Relationship(back_populates="album")  
 
 class AlbumRead(AlbumBase):
     id: int
@@ -108,6 +108,7 @@ class Band(BandBase, table=True):
     primary_contact: Optional[Person] = Relationship(back_populates="bands")
 
     band_members: List["Band_Member"] = Relationship(back_populates="band")
+    albums: List[Album] = Relationship(back_populates="band")
 
 class BandRead(BandBase):
     id: int
@@ -138,11 +139,13 @@ class SongBase(SQLModel):
 class Song(SongBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True, description="Song ID", sa_column_kwargs={"name":"Song_Id"})
     album_id: Optional[int] = Field(default=None, description="Album ID where the song was recorded", sa_column_kwargs={"name":"Album_id"}, foreign_key="album.Album_Id")
-    # album: Optional[Album] = Relationship(back_populates="songs")
+    album: Optional[Album] = Relationship(back_populates="songs")
 
 class SongRead(SongBase):
     id: int
 
+class SongReadWithAlbum(SongBase):
+    album : Optional[AlbumRead] = None
 
 # # Create a class called Band_Instrument which inherits from SQLModel
 # class Band_Instrument(SQLModel, table=True):

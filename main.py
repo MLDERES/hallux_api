@@ -2,7 +2,7 @@ from typing import Union, List, Optional
 
 from fastapi import FastAPI, HTTPException,status, Query, Depends
 from sqlmodel import Session
-from src.model import Band, PersonRead, Instrument, Album, BandRead, BandReadWithPersons, Song
+from src.model import Band, PersonRead, Instrument, Album, BandRead, BandReadWithPersons, SongRead, Song, Person, Band_Member, BandReadWithPersons, BandRead, PersonRead, AlbumRead, SongRead, SongReadWithAlbum
 from src.db import get_album_by_id, get_albums, get_bands, get_band_by_id, get_persons,get_bands, get_persons, get_person_by_id, get_session, get_song_by_id, get_songs
 
 app = FastAPI()
@@ -47,13 +47,13 @@ def read_album_by_id(album_id: int):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Album not found.')
     return album
 
-@app.get("/songs", response_model=List[Song])
-def read_songs(name: str = '', offset: int=0, limit:int=Query(default=10,lte=100)):
-    return get_songs(name, offset, limit)
+@app.get("/songs", response_model=List[SongRead])
+def read_songs(*, session: Session = Depends(get_session), name: str = '', offset: int=0, limit:int=Query(default=10,lte=100)):
+    return get_songs(session, name, offset, limit)
 
-@app.get("/songs/{song_id}", response_model=Song)
-def read_song_by_id(song_id: int):
-    song = get_song_by_id(song_id)
+@app.get("/songs/{song_id}", response_model=SongReadWithAlbum)
+def read_song_by_id(*, session: Session = Depends(get_session), song_id: int):
+    song = get_song_by_id(session, song_id)
     if not song:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Song not found.')
     return song

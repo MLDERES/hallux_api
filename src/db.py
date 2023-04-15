@@ -2,7 +2,7 @@ from types import UnionType
 from sqlmodel import Field, Session, SQLModel, create_engine, select, Relationship
 from dotenv import load_dotenv
 from os import getenv
-from .model import Album, Band, Person, Song
+from .model import Album, Band, Person, Song, SongReadWithAlbum
 
 # This library allows the environment variables to be loaded from a file
 load_dotenv()
@@ -63,15 +63,13 @@ def get_album_by_id(id: int) -> Album:
         return results.first() if results else None
     
 # Get a list of songs for an album
-def get_songs(name: str = '', offset: int = 0, limit: int = 100) :
-    with Session(engine) as session:
+def get_songs(session, name: str = '', offset: int = 0, limit: int = 100) :
         statement = select(Song).order_by(Song.album_id, Song.sequence).where(Song.name.startswith(name)).offset(offset).limit(limit)
         results = session.exec(statement)
         return results.all() if results else None
 
 # Get a specific song by id
-def get_song_by_id(song_id: int) -> Song:
-    with Session(engine) as session:
+def get_song_by_id(session, song_id: int) -> SongReadWithAlbum:
         statement = select(Song).where(Song.id ==song_id)
         results = session.exec(statement)
         return results.first() if results else None

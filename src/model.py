@@ -106,7 +106,6 @@ class Person(PersonBase, table=True):
     
     # Relationships can ONLY be defined in the table models
     bands: List["Band"] = Relationship(back_populates="primary_contact")
-
     band_links: List["Band_Member"] = Relationship(back_populates="member")
 
 class PersonRead(PersonBase):
@@ -128,17 +127,20 @@ class Band(BandBase, table=True):
     # Create a relationship to the Person class
     # Relationships can ONLY be defined in the table models
     primary_contact: Optional[Person] = Relationship(back_populates="bands")
-    band_members: List["Band_Member"] = Relationship(back_populates="band")
     albums: List["Album"] = Relationship(back_populates="band")
-
+    
+    band_members: List["Band_Member"] = Relationship(back_populates="band")
+    
 class BandRead(BandBase):
     id: int
 
 class BandReadWithPersons(BandBase):
     primary_contact : Optional[PersonRead]=None
-    members : List[PersonRead] = None
+    members : List[Person] = None
+    albums: List[Album]=None
 
 # There is never a reason to inherit from TABLE models
+# This class is used as a join table between the Band and Person classes
 class Band_Member(SQLModel, table=True,):
     status : Optional[str] = None
     band_id : Optional[int] = Field(default=None, description="Band ID", sa_column_kwargs={"name":"Band_id"}, foreign_key="band.Band_id")

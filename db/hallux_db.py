@@ -12,6 +12,7 @@ uid = getenv("HALLUX_USER")
 pwd = getenv("HALLUX_PASSWORD")
 db = getenv("HALLUX_DB")
 
+
 def connect_odbc():
     # Connect to a MS SQL Server Database
     cnn_string = (
@@ -28,12 +29,17 @@ def connect_odbc():
     print(cnn_string)
     cnn = pyodbc.connect(cnn_string)
     return cnn
-    
+
+
 def connect_alchemy():
-    engine = create_engine(f"mssql+pyodbc://{uid}:{pwd}@{svr}/{db}?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes", fast_executemany=True)
+    engine = create_engine(
+        f"mssql+pyodbc://{uid}:{pwd}@{svr}/{db}?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes",
+        fast_executemany=True,
+    )
     return engine
 
-def execute_odbc(cnn, query):    
+
+def execute_odbc(cnn, query):
     # Create the cursor required to run the command
     cur = cnn.cursor()
 
@@ -43,9 +49,13 @@ def execute_odbc(cnn, query):
     for row in cur:
         print(row)
 
+
 # with the engine and the query as parameters, write a function that will execute the query using sqlalchemy
 def execute_alchemy(engine, query):
-    engine = create_engine(f"mssql+pyodbc://{uid}:{pwd}@{svr}/{db}?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes", fast_executemany=True)
+    engine = create_engine(
+        f"mssql+pyodbc://{uid}:{pwd}@{svr}/{db}?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes",
+        fast_executemany=True,
+    )
     for row in engine.execute(query):
         print(row)
 

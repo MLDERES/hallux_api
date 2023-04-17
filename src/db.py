@@ -1,10 +1,8 @@
-from types import UnionType
-from typing import List, Optional, Union
 from fastapi import HTTPException
-from sqlmodel import Field, Session, SQLModel, create_engine, select, Relationship
+from sqlmodel import Session, SQLModel, create_engine, select
 from dotenv import load_dotenv
 from os import getenv
-from .model import Agent, Album, AlbumReadWithSongs, Band, Person, Song, SongRead
+from .model import Agent, Album, Band, Person, Song, SongRead
 from sqlalchemy.orm import joinedload
 
 # This library allows the environment variables to be loaded from a file
@@ -131,7 +129,7 @@ def get_agents(
     first_name: str = "",
     last_name: str = "",
     offset: int = 0,
-    limit: int = 100,
+    limit: int = 10,
 ):
     statement = (
         select(Agent)

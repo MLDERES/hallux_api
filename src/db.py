@@ -136,11 +136,17 @@ def get_agents(
     statement = (
         select(Agent)
         .order_by(Agent.id)
-        #.where(Agent.first_name.startswith(first_name))
-        # .where(Agent.last_name.startswith(last_name))
+        # See issue #12
+        #.where(Agent.person.first_name.startswith(first_name))
+        #.where(Agent.person.last_name.startswith(last_name))
         .offset(offset)
         .limit(limit)
         .options(joinedload(Agent.person))
     )
     results = session.exec(statement)
     return results.all() if results else None
+
+def get_agent_by_id(session, agent_id: int):
+    statement = select(Agent).where(Agent.id == agent_id).options(joinedload(Agent.person))
+    results = session.exec(statement)
+    return results.first() if results else None

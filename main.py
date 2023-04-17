@@ -27,6 +27,7 @@ from src.db import (
     get_session,
     get_song_by_id,
     get_songs,
+    get_agent_by_id
 )
 
 version = "0.1.0"
@@ -131,3 +132,12 @@ def read_agents(
     limit: int = Query(default=10, lte=100)
 ):
     return get_agents(session, name, offset, limit)
+
+@app.get("/agents/{agent_id}", response_model=AgentRead)
+def read_agent_by_id(*, session: Session = Depends(get_session), agent_id: int):
+    agent = get_agent_by_id(session, agent_id)
+    if not agent:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Agent not found."
+        )
+    return agent

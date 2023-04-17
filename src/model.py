@@ -344,14 +344,7 @@ class Person(PersonBase, table=True):
 class PersonRead(PersonBase):
     id: int
 
-class Agent(SQLModel, table=True):
-    id: Optional[int] = Field(
-        default=None,
-        description="Agent ID",
-        sa_column_kwargs={"name": "Agent_Id"},
-        foreign_key="person.Person_Id",
-        primary_key=True,
-    )
+class AgentBase(SQLModel):
     hire_date: datetime = Field(
         default=None,
         description="Hire date of the agent",
@@ -370,13 +363,21 @@ class Agent(SQLModel, table=True):
     salary: Optional[float] = Field(
         default=None, description="Salary", sa_column_kwargs={"name": "Salary"}
     )
+
+class Agent(AgentBase, table=True):
+    id: Optional[int] = Field(
+        default=None,
+        description="Agent ID",
+        sa_column_kwargs={"name": "Agent_Id"},
+        foreign_key="person.Person_Id",
+        primary_key=True,
+    )
     contracts: Optional["Contract"] = Relationship(back_populates="agent")
     person: Optional['Person']=Relationship(back_populates='agents')
         
 
-class AgentRead(Agent):
-    pass
-
+class AgentRead(AgentBase):
+    person: Person
 
 # Create the Band base class
 class BandBase(SQLModel):

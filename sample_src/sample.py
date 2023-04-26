@@ -27,6 +27,9 @@ class Band(Base):
 
     band_name = Column(String)
     genres = relationship("Genre", secondary=band_genre, back_populates='bands')
+    
+    def __str__(self):
+        return f"{self.band_id}: {self.band_name}"
 
 class Genre(Base):
     __tablename__ = "Genre"
@@ -51,5 +54,6 @@ Session = sessionmaker(bind=engine)
 
 session = Session()
 for r in session.query(Band):
+    print(f'{r}')
     for g in r.genres:
-        print(g)
+        print(f'\t{g}')

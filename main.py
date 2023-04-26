@@ -9,8 +9,6 @@ from src.model import (
     BandRead,
     BandReadWithPersons,
     SongRead,
-    BandReadWithPersons,
-    BandRead,
     PersonRead,
     SongRead,
 )

@@ -32,8 +32,8 @@ def get_session():
 def get_bands(session: Session, name: str = "", offset: int = 0, limit: int = 100):
     statement = (
         select(Band)
-        .order_by(Band.id)
-        .where(Band.name.startswith(name))
+        .order_by(Band.band_id)
+        .where(Band.band_name.startswith(name))
         .offset(offset)
         .limit(limit)
     )
@@ -47,8 +47,6 @@ def get_band_by_id(session: Session, id: int):
     if not band:
         raise HTTPException(status_code=404, detail="Band not found")
     return band
-    # results = session.exec(select(Band).where(Band.id==id))
-    # return results.first() if results else None
 
 
 # Get persons by first_name, last_name, or both

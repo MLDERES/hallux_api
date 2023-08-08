@@ -1,8 +1,8 @@
 from typing import Optional, List
 from datetime import datetime
 from sqlmodel import Field, Session, SQLModel, create_engine, select, Relationship
+from sqlalchemy import Table, Column, ForeignKey
 from dotenv import load_dotenv
-from os import getenv
 
 
 # Create a class called Instrument which inherits from SQLModel
@@ -28,27 +28,24 @@ class InstrumentRead(InstrumentBase):
     id: int
 
 
-class GenreBase(SQLModel):
-    name: Optional[str] = Field(
-        default=None,
-        description="Name of the genre",
-        sa_column_kwargs={"name": "Genre"},
-    )
-
-
 # Create a class called Genre which inherits from SQLModel
 class Genre(SQLModel, table=True):
     # Specify a map to all the fields in the database table called Genre
-    id: Optional[int] = Field(
+    genre_id: int = Field(
         default=None,
         primary_key=True,
         description="Genre ID",
         sa_column_kwargs={"name": "Genre_Id"},
     )
+    name: Optional[str] = Field(
+        default=None,
+        description="Name of the genre",
+        sa_column_kwargs={"name": "Genre"},
+    )
+    bands: List["Band"] = Relationship(sa_relationship_kwargs=dict(secondary="Band_Genre", back_populates='genres'))
 
-
-class GenreRead(GenreBase):
-    id: int
+    def __str__(self):
+        return f"{self.genre_id}: {self.genre}"
 
 
 class ContractBase(SQLModel):
@@ -231,9 +228,7 @@ class SongBase(SQLModel):
         description="Duration in seconds",
         sa_column_kwargs={"name": "Duration_Seconds"},
     )
-    sequence: Optional[int] = Field(
-        default=None, description="Sequence of the song in the album"
-    )
+    sequence: Optional[int] = Field(default=None, description="Sequence of the song in the album")
     album_id: Optional[int] = Field(
         default=None,
         description="Album ID where the song was recorded",
@@ -261,9 +256,7 @@ class AlbumBase(SQLModel):
     name: str = Field(
         default=None, description="Album Title", sa_column_kwargs={"name": "Album_Name"}
     )
-    release_date: Optional[datetime] = Field(
-        default=None, description="Album Release Date"
-    )
+    release_date: Optional[datetime] = Field(default=None, description="Album Release Date")
     production_cost: Optional[float] = Field(
         default=None,
         description="Cost to produce the album",
@@ -293,6 +286,7 @@ class Album(AlbumBase, table=True):
 class AlbumRead(AlbumBase):
     id: int
 
+
 class AlbumReadWithSongs(AlbumRead):
     songs: List["SongRead"] = []
 
@@ -302,7 +296,7 @@ class AlbumReadWithSongs(AlbumRead):
 class PersonBase(SQLModel):
     # __mapper_args__ = {"polymorphic_identity":"person",
     #                    "polymorphic_on":"type"}
-    
+
     first_name: Optional[str] = Field(
         default=None,
         description="Person First Name",
@@ -316,13 +310,9 @@ class PersonBase(SQLModel):
         description="Person's Address",
         sa_column_kwargs={"name": "street_address"},
     )
-    phone_number: Optional[str] = Field(
-        default=None, description="Person's Phone Number"
-    )
+    phone_number: Optional[str] = Field(default=None, description="Person's Phone Number")
     email: Optional[str] = Field(default=None, description="Person's Email Address")
-    zip_code_ext: Optional[str] = Field(
-        default=None, description="Person's Zip Code Extension"
-    )
+    zip_code_ext: Optional[str] = Field(default=None, description="Person's Zip Code Extension")
     zip_code: Optional[str] = Field(default=None, description="Person's Zip Code")
 
 
@@ -339,10 +329,12 @@ class Person(PersonBase, table=True):
     # Relationships can ONLY be defined in the table models
     bands: List["Band"] = Relationship(back_populates="primary_contact")
     band_links: List["Band_Member"] = Relationship(back_populates="member")
-    agents : List['Agent'] = Relationship(back_populates="person")
+    agents: List["Agent"] = Relationship(back_populates="person")
+
 
 class PersonRead(PersonBase):
     id: int
+
 
 class AgentBase(SQLModel):
     hire_date: datetime = Field(
@@ -364,6 +356,7 @@ class AgentBase(SQLModel):
         default=None, description="Salary", sa_column_kwargs={"name": "Salary"}
     )
 
+
 class Agent(AgentBase, table=True):
     id: Optional[int] = Field(
         default=None,
@@ -373,20 +366,29 @@ class Agent(AgentBase, table=True):
         primary_key=True,
     )
     contracts: Optional["Contract"] = Relationship(back_populates="agent")
-    person: Optional['Person']=Relationship(back_populates='agents')
-        
+    person: Optional["Person"] = Relationship(back_populates="agents")
+
 
 class AgentRead(AgentBase):
     person: Person
 
-# Create the Band base class
-class BandBase(SQLModel):
+
+# There is never a reason to inherit from TABLE models
+class Band(SQLModel, table=True):
+    # Specify a map to all the fields in the database table called Band
+    band_id: Optional[int] = Field(
+        default=None,
+        primary_key=True,
+        description="Band ID",
+        sa_column_kwargs={"name": "Band_id"},
+    )
+
     status_code: Optional[str] = Field(
         default=None,
         description="Band Status Code",
         sa_column_kwargs={"name": "Band_Status_Code"},
     )
-    name: Optional[str] = Field(
+    band_name: Optional[str] = Field(
         default=None,
         description="Name of the band",
         sa_column_kwargs={"name": "Band_Name"},
@@ -400,32 +402,27 @@ class BandBase(SQLModel):
         description="ID of the primary contact for the band",
         foreign_key="person.Person_Id",
     )
-
-
-# There is never a reason to inherit from TABLE models
-class Band(BandBase, table=True):
-    # Specify a map to all the fields in the database table called Band
-    id: Optional[int] = Field(
-        default=None,
-        primary_key=True,
-        description="Band ID",
-        sa_column_kwargs={"name": "Band_id"},
-    )
-
     # Create a relationship to the Person class
     # Relationships can ONLY be defined in the table models
     primary_contact: Optional[Person] = Relationship(back_populates="bands")
     albums: List["Album"] = Relationship(back_populates="band")
     # contracts: List["Contract"] = Relationship(back_populates="band")
+    genres: List["Genre"] = Relationship(sa_relationship_kwargs=dict(secondary="Band_Genre",back_populates="bands"))
 
     band_members: List["Band_Member"] = Relationship(back_populates="band")
 
+    def __str__(self):
+        return f"{self.band_id}: {self.band_name}"
+
+class BandBase(SQLModel):
+    pass
+
 
 class BandRead(BandBase):
-    id: int
+    pass
 
 
-class BandReadWithPersons(BandBase):
+class BandReadWithPersons(BandRead):
     primary_contact: Optional[PersonRead] = None
     members: List[Person] = None
     albums: List[Album] = None
@@ -458,6 +455,10 @@ class Band_Member(
     band: "Band" = Relationship(back_populates="band_members")
     member: "Person" = Relationship(back_populates="band_links")
 
+class Band_Genre(SQLModel):
+    __tablename__ = 'Band_Genre'
+    genre_id: Optional[int] = Field(default=None, foreign_key="Genre.genre_id", primary_key=True)
+    band_id: Optional[int] = Field(default=None, foreign_key="Band.band_id", primary_key=True)
 
 # # Create a class called Band_Instrument which inherits from SQLModel
 # class Band_Instrument(SQLModel, table=True):
